@@ -1,10 +1,8 @@
 .App {
   display: flex;
-  justify-content: center;
-  align-items: center;
   min-height: 100vh;
   background: linear-gradient(to bottom, #b9e9b3, #d7f3cd);
-  font-family: 'Comic Sans MS', cursive, sans-serif;
+  font-family: 'Arial', sans-serif; /* Changed from Comic Sans for better readability */
 }
 
 .App-logo {
@@ -42,17 +40,165 @@
   }
 }
 
+/* Main container adjustments for sidebar */
 .game-container {
+  margin-left: 250px; /* Match sidebar width */
+  flex: 1;
   display: flex;
   flex-direction: column;
-  width: 90%;
   max-width: 1000px;
   background-color: #fff9e8;
   border-radius: 20px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
   padding: 20px;
-  margin: 20px 0;
+  margin-top: 20px;
+  margin-bottom: 20px;
   border: 8px solid #926c43;
+  align-self: center;
+}
+
+/* Navigation tabs */
+.navigation-tabs {
+  display: flex;
+  justify-content: center;
+  margin: 15px 0;
+  gap: 10px;
+}
+
+.nav-button {
+  padding: 10px 25px;
+  background-color: #f7d79b;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  font-weight: bold;
+  color: #705834;
+  transition: all 0.2s;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.nav-button:hover {
+  background-color: #f18701;
+  color: white;
+  transform: translateY(-2px);
+}
+
+.nav-button.active {
+  background-color: #6a994e;
+  color: white;
+}
+
+/* Current vegetable info display */
+.current-veg-info {
+  display: flex;
+  align-items: center;
+  background-color: #fff;
+  border-radius: 12px;
+  padding: 15px;
+  margin: 15px 0;
+  border: 3px solid #d9b38c;
+}
+
+.veg-icon-large {
+  font-size: 4rem;
+  margin-right: 20px;
+  filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));
+}
+
+.veg-details {
+  flex: 1;
+}
+
+.veg-details h2 {
+  margin: 0 0 10px 0;
+  color: #6a994e;
+}
+
+.veg-stats {
+  display: flex;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+
+.veg-stats p {
+  margin: 0;
+  padding: 5px 10px;
+  background-color: #f1f9ea;
+  border-radius: 15px;
+  font-weight: bold;
+  color: #705834;
+}
+
+/* Inventory summary */
+.inventory-summary {
+  display: flex;
+  justify-content: space-around;
+  flex-wrap: wrap;
+  margin: 15px 0;
+  background-color: #ffeed5;
+  border-radius: 12px;
+  padding: 15px;
+  border: 3px solid #d9b38c;
+}
+
+.inventory-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 60px;
+  padding: 8px;
+  transition: all 0.2s;
+}
+
+.inventory-item:hover {
+  background-color: #f1f9ea;
+  border-radius: 8px;
+  transform: translateY(-3px);
+}
+
+.inventory-emoji {
+  font-size: 1.8rem; /* Increased size */
+  margin-bottom: 5px;
+}
+
+.inventory-count {
+  font-weight: bold;
+  color: #705834;
+  font-size: 1.1rem; /* Increased size */
+}
+
+/* Power-up category tabs */
+.power-ups-tabs {
+  display: flex;
+  overflow-x: auto;
+  gap: 8px;
+  margin-bottom: 15px;
+  padding: 10px; /* Added padding */
+  background-color: #fff; /* Added background */
+  border-radius: 8px; /* Added rounded corners */
+  border: 2px solid #d9b38c; /* Added border */
+}
+
+.tab-button {
+  padding: 8px 12px;
+  background-color: #f7d79b;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  color: #705834;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+
+.tab-button:hover {
+  background-color: #f18701;
+  color: white;
+}
+
+.tab-button.active {
+  background-color: #6a994e;
+  color: white;
 }
 
 /* Stats Section */
@@ -97,6 +243,10 @@ h1 {
   align-items: center;
   padding: 20px 0;
   min-height: 250px;
+  background-color: #f1f9ea; /* Added background */
+  border-radius: 15px; /* Added rounded corners */
+  border: 4px solid #d9b38c; /* Added border */
+  margin-bottom: 20px; /* Added margin */
 }
 
 .carrot-field {
@@ -115,6 +265,14 @@ h1 {
   transition: transform 0.1s;
   outline: none;
   padding: 0;
+  width: 160px; /* Added fixed width */
+  height: 160px; /* Added fixed height */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: rgba(255, 255, 255, 0.5); /* Added semi-transparent background */
+  border-radius: 50%; /* Made it circular */
+  box-shadow: 0 0 20px rgba(106, 153, 78, 0.5); /* Added glow effect */
 }
 
 .carrot-btn:active {
@@ -269,6 +427,18 @@ h2 {
   display: flex;
   justify-content: space-between;
   gap: 10px;
+  flex-wrap: wrap;
+}
+
+.save-load-buttons .game-button {
+  flex: 1 1 calc(50% - 5px);
+  margin-bottom: 5px;
+}
+
+@media (max-width: 600px) {
+  .save-load-buttons .game-button {
+    flex: 1 1 100%;
+  }
 }
 
 .game-button {
@@ -314,10 +484,77 @@ h2 {
   border-radius: 5px;
 }
 
+/* Button for Vegetable Market */
+.market-button {
+  background-color: #a1c181;
+  color: white;
+}
+
+.market-button:hover {
+  background-color: #6a994e;
+}
+
+/* Animation colors for different vegetables */
+.click-animation.carrot {
+  color: #f18701;
+}
+
+.click-animation.potato {
+  color: #8B4513;
+}
+
+.click-animation.tomato {
+  color: #e94545;
+}
+
+.click-animation.lettuce {
+  color: #2d9348;
+}
+
+.click-animation.corn {
+  color: #f4d03f;
+}
+
+.click-animation.onion {
+  color: #9e5fa1;
+}
+
+/* Menu toggle for mobile */
+.menu-toggle {
+  display: none;
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  z-index: 200;
+  background: #6a994e;
+  border: none;
+  color: white;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  cursor: pointer;
+}
+
+/* Added styles for the no history message */
+.no-history, .no-trades {
+  text-align: center;
+  color: #705834;
+  font-style: italic;
+  padding: 20px;
+  background-color: #f1f9ea;
+  border-radius: 8px;
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .game-container {
-    width: 95%;
+    margin-left: 200px; /* Match smaller sidebar width */
+    width: calc(100% - 220px);
     padding: 15px;
   }
   
@@ -331,5 +568,25 @@ h2 {
   
   h1 {
     font-size: 2rem;
+  }
+  
+  .veg-icon-large {
+    font-size: 3rem;
+  }
+  
+  .veg-stats {
+    flex-direction: column;
+    gap: 5px;
+  }
+}
+
+@media (max-width: 576px) {
+  .menu-toggle {
+    display: flex;
+  }
+  
+  .game-container {
+    margin-left: 0;
+    width: 100%;
   }
 }
