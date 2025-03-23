@@ -8,6 +8,19 @@ const db = new sqlite3.Database(dbPath);
 // Initialize database with required tables
 const initializeDatabase = () => {
   db.serialize(() => {
+    // Create users table
+    db.run(`
+      CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT UNIQUE,
+        email TEXT UNIQUE,
+        password TEXT,
+        resetToken TEXT,
+        resetTokenExpiry INTEGER,
+        createdAt INTEGER
+      )
+    `);
+
     // Create leaderboard table
     db.run(`
       CREATE TABLE IF NOT EXISTS leaderboard (
@@ -23,13 +36,186 @@ const initializeDatabase = () => {
     db.run(`
       CREATE TABLE IF NOT EXISTS game_states (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        username TEXT UNIQUE,
+        userId INTEGER,
+        username TEXT,
         game_data TEXT,
-        timestamp INTEGER
+        timestamp INTEGER,
+        FOREIGN KEY (userId) REFERENCES users(id)
       )
     `);
 
     console.log('Database initialized successfully');
+  });
+};
+
+// User Management Functions
+// Create a new user
+const createUser = (username, email, password) => {
+  return new Promise((resolve, reject) => {
+    const timestamp = Date.now();
+    
+    db.run(
+      'INSERT INTO users (username, email, password, createdAt) VALUES (?, ?, ?, ?)',
+      [username, email, password, timestamp],
+      function(err) {
+        if (err) {
+          reject(err);
+          return;
+        }
+        resolve(this.lastID);
+      }
+    );
+  });
+};
+
+// Get user by email
+const getUserByEmail = (email) => {
+  return new Promise((resolve, reject) => {
+    db.get(
+      'SELECT * FROM users WHERE email = ?',
+      [email],
+      (err, row) => {
+        if (err) {
+          reject(err);
+          return;
+        }
+        resolve(row);
+      }
+    );
+  });
+};
+
+// Get user by id
+const getUserById = (id) => {
+  return new Promise((resolve, reject) => {
+    db.get(
+      'SELECT * FROM users WHERE id = ?',
+      [id],
+      (err, row) => {
+        if (err) {
+          reject(err);
+          return;
+        }
+        resolve(row);
+      }
+    );
+  });
+};
+
+// Get user by username or email (for checking duplicates)
+const getUserByUsernameOrEmail = (username, email) => {
+  return new Promise((resolve, reject) => {
+    db.get(
+      'SELECT * FROM users WHERE username = ? OR email = ?',
+      [username, email],
+      (err, row) => {
+        if (err) {
+          reject(err);
+          return;
+        }
+        resolve(row);
+      }
+    );
+  });
+};
+
+// Store password reset token
+const storeResetToken = (userId, resetToken, resetTokenExpiry) => {
+  return new Promise((resolve, reject) => {
+    db.run(
+      'UPDATE users SET resetToken = ?, resetTokenExpiry = ? WHERE id = ?',
+      [resetToken, resetTokenExpiry, userId],
+      (err) => {
+        if (err) {
+          reject(err);
+          return;
+        }
+        resolve();
+      }
+    );
+  });
+};
+
+// Get user by reset token
+const getUserByResetToken = (resetToken) => {
+  return new Promise((resolve, reject) => {
+    db.get(
+      'SELECT * FROM users WHERE resetToken = ?',
+      [resetToken],
+      (err, row) => {
+        if (err) {
+          reject(err);
+          return;
+        }
+        resolve(row);
+      }
+    );
+  });
+};
+
+// Update password and clear reset token
+const updatePasswordAndClearResetToken = (userId, hashedPassword) => {
+  return new Promise((resolve, reject) => {
+    db.run(
+      'UPDATE users SET password = ?, resetToken = NULL, resetTokenExpiry = NULL WHERE id = ?',
+      [hashedPassword, userId],
+      (err) => {
+        if (err) {
+          reject(err);
+          return;
+        }
+        resolve();
+      }
+    );
+  });
+};
+
+// Update user profile (username and/or email)
+const updateUserProfile = (userId, username, email) => {
+  return new Promise((resolve, reject) => {
+    // Build dynamic update query based on what's provided
+    let query = 'UPDATE users SET ';
+    const params = [];
+    
+    if (username) {
+      query += 'username = ?';
+      params.push(username);
+      if (email) {
+        query += ', email = ?';
+        params.push(email);
+      }
+    } else if (email) {
+      query += 'email = ?';
+      params.push(email);
+    }
+    
+    query += ' WHERE id = ?';
+    params.push(userId);
+    
+    db.run(query, params, function(err) {
+      if (err) {
+        reject(err);
+        return;
+      }
+      resolve(this.changes);
+    });
+  });
+};
+
+// Update user password
+const updateUserPassword = (userId, hashedPassword) => {
+  return new Promise((resolve, reject) => {
+    db.run(
+      'UPDATE users SET password = ? WHERE id = ?',
+      [hashedPassword, userId],
+      function(err) {
+        if (err) {
+          reject(err);
+          return;
+        }
+        resolve(this.changes);
+      }
+    );
   });
 };
 
@@ -96,16 +282,16 @@ const addLeaderboardEntry = (username, score, isAI = false) => {
 // Save game state
 const saveGameState = (gameState) => {
   return new Promise((resolve, reject) => {
-    const { username } = gameState;
+    const { userId, username } = gameState;
     const timestamp = Date.now();
     const gameData = JSON.stringify(gameState);
     
     db.run(
-      `INSERT INTO game_states (username, game_data, timestamp)
-       VALUES (?, ?, ?)
-       ON CONFLICT(username)
+      `INSERT INTO game_states (userId, username, game_data, timestamp)
+       VALUES (?, ?, ?, ?)
+       ON CONFLICT(userId)
        DO UPDATE SET game_data = ?, timestamp = ?`,
-      [username, gameData, timestamp, gameData, timestamp],
+      [userId, username, gameData, timestamp, gameData, timestamp],
       function(err) {
         if (err) {
           reject(err);
@@ -117,7 +303,7 @@ const saveGameState = (gameState) => {
   });
 };
 
-// Load game state
+// Load game state by username (legacy)
 const loadGameState = (username) => {
   return new Promise((resolve, reject) => {
     db.get(
@@ -145,10 +331,48 @@ const loadGameState = (username) => {
   });
 };
 
+// Load game state by user ID
+const loadGameStateByUserId = (userId) => {
+  return new Promise((resolve, reject) => {
+    db.get(
+      'SELECT game_data FROM game_states WHERE userId = ?',
+      [userId],
+      (err, row) => {
+        if (err) {
+          reject(err);
+          return;
+        }
+        
+        if (!row) {
+          resolve(null);
+          return;
+        }
+        
+        try {
+          const gameState = JSON.parse(row.game_data);
+          resolve(gameState);
+        } catch (parseErr) {
+          reject(parseErr);
+        }
+      }
+    );
+  });
+};
+
 module.exports = {
   initializeDatabase,
+  createUser,
+  getUserByEmail,
+  getUserById,
+  getUserByUsernameOrEmail,
+  storeResetToken,
+  getUserByResetToken,
+  updatePasswordAndClearResetToken,
+  updateUserProfile,
+  updateUserPassword,
   getLeaderboard,
   addLeaderboardEntry,
   saveGameState,
-  loadGameState
+  loadGameState,
+  loadGameStateByUserId
 };
