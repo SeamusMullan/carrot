@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, Navigate, useNavigate } from 'react-router-dom';
 import "./App.css";
 import Leaderboard from "./components/Leaderboard";
 import VegetableMarket from "./components/VegetableMarket";
@@ -14,6 +14,10 @@ import EditProfile from "./components/EditProfile";
 function Game() {
   // Page navigation state
   const [currentPage, setCurrentPage] = useState("farm"); // 'farm', 'market', 'leaderboard'
+  const navigate = useNavigate(); // For navigation
+
+  // Get logged in username
+  const [loggedInUser, setLoggedInUser] = useState('');
 
   // Track all vegetables
   const [playerVegetables, setPlayerVegetables] = useState({
@@ -53,6 +57,29 @@ function Game() {
   const [saveStatus, setSaveStatus] = useState("");
   const [loadStatus, setLoadStatus] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(false); // For mobile sidebar
+
+  // Sign out function
+  const handleSignOut = () => {
+    if (window.confirm("Are you sure you want to sign out?")) {
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('username');
+      navigate('/login');
+    }
+  };
+
+  // Navigate to profile page
+  const handleProfileClick = () => {
+    navigate('/profile');
+  };
+
+  // Get username from localStorage on initial load
+  useEffect(() => {
+    const storedUsername = localStorage.getItem("username");
+    if (storedUsername) {
+      setUsername(storedUsername);
+      setLoggedInUser(storedUsername);
+    }
+  }, []);
 
   // Power-ups configuration - now with vegetable-specific power-ups
   const [powerUps, setPowerUps] = useState([
@@ -590,15 +617,6 @@ function Game() {
     return veg.charAt(0).toUpperCase() + veg.slice(1);
   };
 
-  // Try to load game on initial render
-  useEffect(() => {
-    // Get stored username from localStorage or from authToken
-    const storedUsername = localStorage.getItem("username");
-    if (storedUsername) {
-      setUsername(storedUsername);
-    }
-  }, []);
-
   // Save username to localStorage when it changes
   useEffect(() => {
     if (username.trim()) {
@@ -744,6 +762,13 @@ function Game() {
         <div className="stats-section">
           <h1>Vegetable Tycoon</h1>
 
+          {/* User info display */}
+          {loggedInUser && (
+            <div className="user-info">
+              <p>Playing as: <span className="username-display">{loggedInUser}</span></p>
+            </div>
+          )}
+
           <div className="navigation-tabs">
             <button
               className={`nav-button ${currentPage === "farm" ? "active" : ""}`}
@@ -768,10 +793,16 @@ function Game() {
               Leaderboard
             </button>
             <button
-              className="nav-button"
-              onClick={() => window.location.href = '/profile'}
+              className="nav-button profile-button"
+              onClick={handleProfileClick}
             >
               Profile
+            </button>
+            <button
+              className="nav-button signout-button"
+              onClick={handleSignOut}
+            >
+              Sign Out
             </button>
           </div>
 
@@ -830,6 +861,17 @@ function Game() {
   );
 }
 
+// Auth route component - redirects if not authenticated
+function PrivateRoute({ children }) {
+  const isAuthenticated = localStorage.getItem('authToken') !== null;
+  
+  if (!isAuthenticated) {
+    return <Navigate to="/login" />;
+  }
+  
+  return children;
+}
+
 // Main App component with routing
 function App() {
   return (
@@ -838,8 +880,16 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/profile" element={<EditProfile />} />
-        <Route path="/game" element={<Game />} />
+        <Route path="/profile" element={
+          <PrivateRoute>
+            <EditProfile />
+          </PrivateRoute>
+        } />
+        <Route path="/game" element={
+          <PrivateRoute>
+            <Game />
+          </PrivateRoute>
+        } />
         {/* Redirect root to login or game depending on auth status */}
         <Route path="/" element={
           localStorage.getItem('authToken') ? <Navigate to="/game" /> : <Navigate to="/login" />

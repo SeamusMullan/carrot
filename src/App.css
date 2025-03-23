@@ -63,6 +63,7 @@
   justify-content: center;
   margin: 15px 0;
   gap: 10px;
+  flex-wrap: wrap; /* Allow wrapping on smaller screens */
 }
 
 .nav-button {
@@ -86,6 +87,47 @@
 .nav-button.active {
   background-color: #6a994e;
   color: white;
+}
+
+/* Sign out button specific styles */
+.signout-button {
+  background-color: #e07a5f;
+  color: white;
+}
+
+.signout-button:hover {
+  background-color: #c05040;
+}
+
+/* Profile button specific styles */
+.profile-button {
+  background-color: #6a994e;
+  color: white;
+}
+
+.profile-button:hover {
+  background-color: #5a8a3e;
+}
+
+/* User info display */
+.user-info {
+  background-color: #fff;
+  border-radius: 20px;
+  padding: 8px 15px;
+  margin: 10px auto;
+  max-width: 300px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.user-info p {
+  margin: 0;
+  color: #705834;
+  font-size: 0.9rem;
+}
+
+.username-display {
+  font-weight: bold;
+  color: #6a994e;
 }
 
 /* Current vegetable info display */
@@ -578,6 +620,15 @@ h2 {
     flex-direction: column;
     gap: 5px;
   }
+
+  .navigation-tabs {
+    gap: 5px;
+  }
+  
+  .nav-button {
+    padding: 8px 15px;
+    font-size: 0.9rem;
+  }
 }
 
 @media (max-width: 576px) {
@@ -588,5 +639,22 @@ h2 {
   .game-container {
     margin-left: 0;
     width: 100%;
+    max-width: 100%;
+    border-radius: 0;
+    border-width: 0;
+    border-top-width: 8px;
+    border-bottom-width: 8px;
+  }
+  
+  .navigation-tabs {
+    flex-direction: row;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  
+  .nav-button {
+    margin-bottom: 5px;
+    flex: 0 0 calc(50% - 10px);
+    text-align: center;
   }
 }
