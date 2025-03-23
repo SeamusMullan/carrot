@@ -482,13 +482,15 @@ function Game() {
     return num;
   };
 
-  // Save game state
+  // Save game state - improved with clearer status messages
   const saveGame = async () => {
     if (!username.trim()) {
       setSaveStatus("Please enter a username");
       return;
     }
 
+    setSaveStatus("Saving game...");
+    
     try {
       const token = localStorage.getItem('authToken');
       const gameState = {
@@ -513,12 +515,16 @@ function Game() {
         if (!response.ok) {
           throw new Error('Failed to save game to server');
         }
+        
+        setSaveStatus("Game saved successfully to server!");
       } else {
         // Fall back to localStorage
         localStorage.setItem("vegetableTycoonSave", JSON.stringify(gameState));
+        setSaveStatus("Game saved locally successfully!");
       }
       
-      setSaveStatus("Game saved successfully!");
+      // Clear status after 3 seconds
+      setTimeout(() => setSaveStatus(""), 3000);
     } catch (error) {
       setSaveStatus("Error saving game");
       console.error("Error saving game:", error);
@@ -533,20 +539,28 @@ function Game() {
           timestamp: Date.now(),
         };
         localStorage.setItem("vegetableTycoonSave", JSON.stringify(gameState));
-        setSaveStatus("Game saved locally successfully!");
+        setSaveStatus("Game saved locally (fallback)");
+        
+        // Clear status after 3 seconds
+        setTimeout(() => setSaveStatus(""), 3000);
       } catch (localError) {
         setSaveStatus("Error saving game locally");
+        
+        // Clear status after 3 seconds
+        setTimeout(() => setSaveStatus(""), 3000);
       }
     }
   };
 
-  // Load game state
+  // Load game state - improved with clearer status messages
   const loadGame = async () => {
     if (!username.trim()) {
       setLoadStatus("Please enter a username");
       return;
     }
 
+    setLoadStatus("Loading game...");
+    
     try {
       const token = localStorage.getItem('authToken');
       let userData = null;
@@ -562,9 +576,11 @@ function Game() {
           
           if (response.ok) {
             userData = await response.json();
+            setLoadStatus("Game loaded from server!");
           }
         } catch (serverError) {
           console.error("Error loading from server:", serverError);
+          setLoadStatus("Could not load from server, trying local save...");
         }
       }
       
@@ -573,6 +589,7 @@ function Game() {
         const savedData = localStorage.getItem("vegetableTycoonSave");
         if (savedData) {
           userData = JSON.parse(savedData);
+          setLoadStatus("Game loaded from local storage!");
         }
       }
 
@@ -588,14 +605,21 @@ function Game() {
         if (userData.powerUps) {
           setPowerUps(userData.powerUps);
         }
-
-        setLoadStatus("Game loaded successfully!");
+        
+        // Clear status after 3 seconds
+        setTimeout(() => setLoadStatus(""), 3000);
       } else {
         setLoadStatus("No saved game found for this username");
+        
+        // Clear status after 3 seconds
+        setTimeout(() => setLoadStatus(""), 3000);
       }
     } catch (error) {
       setLoadStatus("Error loading game");
       console.error("Error loading game:", error);
+      
+      // Clear status after 3 seconds
+      setTimeout(() => setLoadStatus(""), 3000);
     }
   };
 
@@ -627,6 +651,11 @@ function Game() {
   // Toggle sidebar for mobile
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
+  };
+
+  // Close sidebar (for mobile)
+  const closeSidebar = () => {
+    setSidebarOpen(false);
   };
 
   // Render the current page
@@ -741,7 +770,7 @@ function Game() {
   };
 
   return (
-    <div className="App">
+    <div className={`App ${sidebarOpen ? 'sidebar-open' : ''}`}>
       {/* Mobile menu toggle */}
       <button className="menu-toggle" onClick={toggleSidebar}>
         ☰
@@ -755,7 +784,7 @@ function Game() {
         saveStatus={saveStatus}
         loadStatus={loadStatus}
         isOpen={sidebarOpen}
-        onClose={() => setSidebarOpen(false)}
+        onClose={closeSidebar}
       />
 
       <div className="game-container">
